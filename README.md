@@ -1,144 +1,118 @@
-# WezTerm for PicoCalc
+# PicoCalc Terminal
 
-This is an implementation of an ssh client and terminal emulator that runs on a
-[Raspberry Pi Pico 2
-W](https://www.raspberrypi.com/products/raspberry-pi-pico-2/) installed in a
-[PicoCalc](https://www.clockworkpi.com/picocalc).
+A standalone SSH client and VT100/ANSI terminal emulator for the [Raspberry Pi Pico 2 W](https://www.raspberrypi.com/products/raspberry-pi-pico-2/) running on the [ClockworkPi PicoCalc](https://www.clockworkpi.com/picocalc).
 
-This project is a bit of a toy, but it's a fun one to hack on!
+This project transforms your PicoCalc into a pocket-sized, WiFi-enabled terminal capable of connecting to remote servers via SSH.
 
-> [!NOTE]
-> This will only run on an rp2350 that is pin-compatible with the
-> Pico 2W. It requires wifi.
+## Features
 
-## Status
+*   **Standalone SSH Client**: Connect to any SSH server directly from the device.
+*   **Robust Terminal Emulation**: Built on the `vte` crate for accurate ANSI/VT100 parsing.
+*   **Extended Character Support**: Custom rendering for box-drawing characters (lines, corners, shades) for TUI applications like `htop`, `mc`, and `tmux`.
+*   **Local Shell**: Built-in commands for device management (WiFi config, battery status, backlight control).
+*   **Hardware Accelerated**: Uses the RP2350's capabilities and the ILI9488 display for fast rendering.
 
- * [x] Connect to wifi
- * [x] basic password based ssh auth
- * Terminal Emulation
-    * many escape sequences currently not implemented
-    * keyboard encoding not yet fully implemented
+## Hardware Requirements
 
-## Using it
+*   **ClockworkPi PicoCalc**
+*   **Raspberry Pi Pico 2 W** (RP2350 with WiFi)
+    *   *Note: This firmware is specifically designed for the RP2350 architecture.*
 
-When it first boots it will need to have wifi credentials configured.
-Do this using the `config` command, which stores key/value info in
-flash, which you should format on first use only:
+## Getting Started
 
-```console
+### Prerequisites
+
+You will need a standard Rust toolchain and a few helper tools:
+
+1.  **Install Rust**: [rustup.rs](https://rustup.rs/)
+2.  **Install the Nightly Toolchain**:
+    ```bash
+    rustup toolchain install nightly
+    ```
+3.  **Add the Compilation Target**:
+    ```bash
+    rustup target add thumbv8m.main-none-eabihf
+    ```
+4.  **Install Helper Tools**:
+    ```bash
+    cargo install flip-link
+    # Install picotool (follow instructions at https://github.com/raspberrypi/picotool)
+    ```
+
+### Building & Flashing
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/richcannings/picocalc-wezterm.git
+    cd picocalc-wezterm
+    ```
+
+2.  **Build the Firmware**:
+    ```bash
+    # For Pimoroni Pico Plus 2 W (standard PicoCalc upgrade)
+    cargo +nightly build --release --features pimoroni2w
+    ```
+
+3.  **Generate UF2 File**:
+    ```bash
+    # Convert the ELF to UF2
+    cp target/thumbv8m.main-none-eabihf/release/picocalc-wezterm target/thumbv8m.main-none-eabihf/release/picocalc-wezterm.elf
+    picotool uf2 convert target/thumbv8m.main-none-eabihf/release/picocalc-wezterm.elf picocalc.uf2
+    ```
+
+4.  **Flash**:
+    *   Hold the BOOTSEL button on your Pico 2 W while plugging it in.
+    *   Copy `picocalc.uf2` to the mounted `RPI-RP2` drive.
+
+## Usage
+
+### Initial Setup (WiFi)
+
+On first boot, you need to configure your WiFi credentials. The device includes a local shell for configuration.
+
+```bash
+# Format the config storage (only needed once)
 $ config format
-$ config set wifi_ssid YourSSID
-$ config set wifi_pw YourPW
+
+# Set WiFi credentials
+$ config set wifi_ssid MyNetwork
+$ config set wifi_pw MyPassword
+
+# Reboot to apply
 $ reboot
 ```
 
 > [!CAUTION]
-> Please note that the config storage is clear-text data held
-> in a region of the flash memory on the device. If someone
-> has your device, it is possible to extract any credentials
-> from it simply by booting it up and running `config list`.
+> Credentials are stored in clear-text in the device's flash memory.
 
-When it reboots, it will attempt to connect, DHCP an IP address
-and sync the time from an NTP server.
+### Connecting via SSH
 
-At that point you can ssh somewhere:
+Once connected to WiFi (you'll see an IP address), you can connect to a remote host:
 
-```console
-$ ssh hostname
+```bash
+$ ssh user@192.168.1.10
+# or
+$ ssh 192.168.1.10
 ```
 
-You will be prompted for the username and password for the remote
-host.
+You can also save credentials to avoid typing them every time:
 
-If you don't like typing those things in, you can save them
-in the config:
-
-```console
-$ config set ssh_user YourUser
-$ config set ssh_pw AndPassWord
+```bash
+$ config set ssh_user myuser
+$ config set ssh_pw mypassword
 ```
 
-> [!CAUTION]
-> Please note that the config storage is clear-text data held
-> in a region of the flash memory on the device. If someone
-> has your device, it is possible to extract any credentials
-> from it simply by booting it up and running `config list`.
+### Local Commands
 
-## Available Commands
+*   `cls`: Clear the screen.
+*   `bat`: Show battery status.
+*   `bl lcd <percent>`: Set LCD backlight brightness (e.g., `bl lcd 50`).
+*   `bl kbd <percent>`: Set keyboard backlight brightness (requires updated keyboard firmware).
+*   `free`: Show memory usage.
+*   `bootsel`: Reboot into bootloader mode.
 
-### bat
+## Credits
 
-Show battery charging status and remaining capacity as a percentage.
-
-### bl
-
-Show or manipulate the keyboard or lcd backlight
-
-* `bl kbd PCT` - sets the keyboard backlight level to `PCT` percentage.
-   Note that this functionality requires an updated version of the
-   picocalc keyboard MCU firmware to be installed on your device,
-   as many shipped without this functionality.
-   [PR](https://github.com/clockworkpi/PicoCalc/pull/21)
-   [How to flash the keyboard MCU](https://github.com/clockworkpi/PicoCalc/blob/master/wiki/Setting-Up-Arduino-Development-for-PicoCalc-keyboard.md)
-* `bl lcd PCT` - sets the lcd backlight level to `PCT` percentage.
-
-### bootsel
-
-Reboot into bootsel mode, to facilitate flashing a new firmware image
-
-### cls
-
-Clears the screen
-
-### config
-
-Operates on the config section of flash storage. This is 8KiB in size.
-
- * `config format` - prepares the flash storage region for first use
- * `config list` - shows the contents of the config storage
- * `config get KEY` - shows the value of `KEY`
- * `config rm KEY` - marks `KEY` as removed
- * `config set KEY VALUE` - assigns `KEY=VALUE`
-
-> [!CAUTION]
-> Please note that the config storage is clear-text data held
-> in a region of the flash memory on the device. If someone
-> has your device, it is possible to extract any credentials
-> from it simply by booting it up and running `config list`.
-
-### free
-
-Shows memory usage information
-
-### ls
-
-Shows contents of a FAT SD card.  This is currently very basic and doesn't
-support LFN.
-
-### reboot
-
-Reboot the device
-
-### ssh
-
-A very simple ssh client
-
-* `ssh host` - connect to host and start a shell
-* `ssh host command` - connect to host and run a command
-
-### time
-
-Show the time
-
-## Building it
-
-You need `flip-link` to re-arrange the memory layout:
-
-```console
-$ cargo install flip-link
-```
-
-if for some reason this doesn't work out, comment out the `linker` line from
-`.cargo/config.toml`, but note that the estimation of available RAM printed
-on boot will be incorrect.
-
+*   Forked from [wezterm/picocalc-wezterm](https://github.com/wezterm/picocalc-wezterm).
+*   Original SSH implementation using [sunset](https://github.com/wez/sunset).
+*   Terminal emulation powered by [vte](https://github.com/alacritty/vte).
