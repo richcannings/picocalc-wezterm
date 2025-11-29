@@ -58,5 +58,5 @@ fn main() {
         ci_tag = info.trim().to_string();
     }
 
-    println!("cargo:rustc-env=WEZTERM_CI_TAG={}", ci_tag);
+    println!("cargo:rustc-env=PICOCALC_CI_TAG={}", ci_tag);
 }

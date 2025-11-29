@@ -48,20 +48,7 @@ macro_rules! print {
     }
 }
 
-type PicoCalcDisplay<'a> = mipidsi::Display<
-    SpiInterface<
-        'a,
-        embassy_embedded_hal::shared_bus::blocking::spi::SpiDeviceWithConfig<
-            'a,
-            NoopRawMutex,
-            embassy_rp::spi::Spi<'a, SPI1, embassy_rp::spi::Blocking>,
-            Output<'a>,
-        >,
-        Output<'a>,
-    >,
-    ILI9488Rgb565,
-    Output<'a>,
->;
+use crate::screen::PicoCalcDisplay;
 
 mod config;
 mod fixed_str;
@@ -85,12 +72,12 @@ pub static IMAGE_DEF: ImageDef = ImageDef::secure_exe();
 #[unsafe(link_section = ".bi_entries")]
 #[used]
 pub static PICOTOOL_ENTRIES: [embassy_rp::binary_info::EntryAddr; 4] = [
-    embassy_rp::binary_info::rp_program_name!(c"WezTerm"),
-    embassy_rp::binary_info::rp_program_description!(c"Hardware WezTerm"),
+    embassy_rp::binary_info::rp_program_name!(c"PicoCalc"),
+    embassy_rp::binary_info::rp_program_description!(c"Hardware PicoCalc"),
     embassy_rp::binary_info::env!(
         embassy_rp::binary_info::consts::TAG_RASPBERRY_PI,
         embassy_rp::binary_info::consts::ID_RP_PROGRAM_VERSION_STRING,
-        "WEZTERM_CI_TAG"
+        "PICOCALC_CI_TAG"
     ),
     embassy_rp::binary_info::rp_program_build_attribute!(),
 ];
@@ -156,8 +143,8 @@ async fn main(spawner: Spawner) {
     .await;
 
     print!(
-        "\u{1b}[35mWezTerm {} ({})\u{1b}[0m\r\n",
-        env!("WEZTERM_CI_TAG"),
+        "\u{1b}[35mPicoCalc {} ({})\u{1b}[0m\r\n",
+        env!("PICOCALC_CI_TAG"),
         if cfg!(feature = "pico2w") {
             "pico2w"
         } else if cfg!(feature = "pimoroni2w") {

@@ -27,9 +27,9 @@ use sntpc::{NtpContext, NtpResult, NtpTimestampGenerator, get_time};
 
 /// This type is used to expose the current time to the
 /// embedded_sdmmc crate
-pub struct WezTermTimeSource();
+pub struct PicoTimeSource();
 
-impl embedded_sdmmc::TimeSource for WezTermTimeSource {
+impl embedded_sdmmc::TimeSource for PicoTimeSource {
     fn get_timestamp(&self) -> embedded_sdmmc::Timestamp {
         let now = UnixTime::now();
         let chrono = now.as_chrono();

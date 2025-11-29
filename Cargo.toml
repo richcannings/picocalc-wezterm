@@ -56,10 +56,7 @@ static_cell = { version = "*" }
 sunset-embassy = {version="0.2", default-features = false, git = "https://github.com/wez/sunset.git", branch="elided"}
 sunset = {version="0.2", default-features = false, git = "https://github.com/wez/sunset.git", branch="elided"}
 chrono = { version = "0.4.40", default-features = false }
-wezterm-cell = { git="https://github.com/wezterm/wezterm", default-features=false }
-wezterm-char-props = { git="https://github.com/wezterm/wezterm", default-features=false }
-wezterm-escape-parser = { git="https://github.com/wezterm/wezterm" }
-wezterm-surface = { git="https://github.com/wezterm/wezterm" }
+vte = { version = "0.11", default-features = false, features = ["no_std"] }
 
 [profile.dev]
 debug = 2

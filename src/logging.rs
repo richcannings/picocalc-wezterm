@@ -41,7 +41,7 @@ pub async fn setup_logging(
     let (mut tx0, rx0) = uart0.split();
 
     let _ = tx0
-        .write_all(b"\r\n\r\n *** WezTerm picocalc starting up ***\r\n\r\n")
+        .write_all(b"\r\n\r\n *** PicoCalc starting up ***\r\n\r\n")
         .await;
 
     spawner.must_spawn(log(tx0, usb));

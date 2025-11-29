@@ -3,7 +3,7 @@ use crate::config::CONFIG;
 use crate::keyboard::{Key, KeyReport, KeyState, Modifiers};
 use crate::net::alloc::string::ToString;
 use crate::process::{LineEditor, Process, assign_proc, assign_proc_if};
-use crate::rng::WezTermRng;
+use crate::rng::PicoRng;
 use crate::screen::{SCREEN, SCREEN_HEIGHT, SCREEN_WIDTH, Screen};
 use alloc::boxed::Box;
 use alloc::string::String;
@@ -94,7 +94,7 @@ pub async fn setup_wifi(
         net_device,
         config,
         RESOURCES.init(StackResources::new()),
-        WezTermRng.next_u64(),
+        PicoRng.next_u64(),
     );
     spawner.must_spawn(net_runner(runner));
 
@@ -215,7 +215,7 @@ async fn ssh_channel_task(mut channel: ChanInOut<'_, '_>, key_rx: Arc<Channel<CS
                     );
                 } else {
                     let text = match key_report.key {
-                        Key::Enter => "\n",
+                        Key::Enter => "\r",
                         Key::BackSpace => "\u{7f}",
                         Key::Tab => "\t",
                         Key::Escape => "\u{1b}",
@@ -371,8 +371,8 @@ async fn ssh_session_task(host: String, command: Option<String>) {
 
                                         let pty = {
                                             let screen = SCREEN.get().lock().await;
-                                            let rows = screen.height;
-                                            let cols = screen.width;
+                                            let rows = screen.height();
+                                            let cols = screen.width();
 
                                             sunset::Pty {
                                                 term,
@@ -593,15 +593,11 @@ async fn wifi_scanner(mut control: Control<'static>) {
 }
 */
 
-/// Taken from wezterm-input-types
 /// Map c to its Ctrl equivalent.
-/// In theory, this mapping is simply translating alpha characters
-/// to upper case and then masking them by 0x1f, but xterm inherits
-/// some built-in translation from legacy X11 so that are some
-/// aliased mappings and a couple that might be technically tied
-/// to US keyboard layout (particularly the punctuation characters
-/// produced in combination with SHIFT) that may not be 100%
-/// the right thing to do here for users with non-US layouts.
+/// This mapping translates characters to their control code equivalents.
+/// It includes standard alpha mappings (masking with 0x1f) and common
+/// aliased mappings for punctuation and digits often found in terminal
+/// emulators (e.g., xterm compatibility).
 fn ctrl_mapping(c: char) -> Option<char> {
     Some(match c {
         '@' | '`' | ' ' | '2' => '\x00',

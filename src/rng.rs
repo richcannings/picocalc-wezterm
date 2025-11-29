@@ -26,7 +26,7 @@ pub fn init_rng(trng: TRNG) {
 }
 
 fn getrandom_custom(buf: &mut [u8]) -> Result<(), getrandom::Error> {
-    let mut rng = WezTermRng;
+    let mut rng = PicoRng;
     let mut rng = ChaCha20Rng::from_rng(&mut rng).map_err(|_err| getrandom::Error::UNEXPECTED)?;
     rng.fill_bytes(buf);
     Ok(())
@@ -34,8 +34,8 @@ fn getrandom_custom(buf: &mut [u8]) -> Result<(), getrandom::Error> {
 
 /// Our Rng type. It internally manages mutual exclusion around
 /// the underlying TRNG hardware.
-pub struct WezTermRng;
-impl rand_core::RngCore for WezTermRng {
+pub struct PicoRng;
+impl rand_core::RngCore for PicoRng {
     fn next_u32(&mut self) -> u32 {
         RNG.try_get().unwrap().try_lock().unwrap().next_u32()
     }

@@ -1,5 +1,5 @@
 use crate::byte_size;
-use crate::time::WezTermTimeSource;
+use crate::time::PicoTimeSource;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::fmt::Write;
@@ -32,7 +32,7 @@ type CardType = SdCard<
     >,
     Delay,
 >;
-type VolMgr = VolumeManager<CardType, WezTermTimeSource, MAX_DIRS, MAX_FILES, MAX_VOLUMES>;
+type VolMgr = VolumeManager<CardType, PicoTimeSource, MAX_DIRS, MAX_FILES, MAX_VOLUMES>;
 
 #[derive(Default)]
 pub enum Storage {
@@ -91,7 +91,7 @@ async fn check_card(sd_detect: &Input<'_>) {
                     // Now let's look for volumes (also known as partitions) on our block device.
                     // To do this we need a Volume Manager. It will take ownership of the block device.
                     let sdcard = storage.take_sdcard();
-                    let volume_mgr = VolMgr::new(sdcard, WezTermTimeSource());
+                    let volume_mgr = VolMgr::new(sdcard, PicoTimeSource());
 
                     storage.mark_loaded(volume_mgr);
                 }
