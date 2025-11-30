@@ -104,7 +104,7 @@ $ reboot
 Once connected to WiFi (you'll see an IP address), you can connect to a remote host:
 
 ```bash
-$ ssh user@192.168.1.10
+$ ssh mymachine
 # or
 $ ssh 192.168.1.10
 ```
@@ -124,6 +124,14 @@ You can scroll through the command history (up to 200 lines) using the following
 *   `Ctrl + DownArrow`: Scroll down
 
 Typing any character or receiving new output from the server will automatically reset the view to the bottom.
+
+You can configure the number of lines in the scrollback buffer (default 200, max 500):
+
+```bash
+$ config set scroll 500
+$ config get scroll
+$ config rm scroll  # Resets to default (200)
+```
 
 ### Local Commands
 

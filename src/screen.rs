@@ -325,6 +325,18 @@ impl ScreenModel {
         }
     }
 
+    pub fn set_max_scrollback(&mut self, max: usize) {
+        self.max_scrollback = max;
+        if self.scrollback.len() > max {
+            let remove_count = self.scrollback.len() - max;
+            self.scrollback.drain(0..remove_count);
+            // Adjust viewport offset if it's now out of bounds
+            if self.viewport_offset > self.scrollback.len() {
+                self.viewport_offset = self.scrollback.len();
+            }
+        }
+    }
+
     pub fn update_display(&mut self, display: &mut PicoCalcDisplay) {
         if self.full_repaint {
             display.clear(Rgb565::BLACK).unwrap();

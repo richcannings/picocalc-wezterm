@@ -1,4 +1,5 @@
 use crate::fixed_str::FixedString;
+use crate::screen::SCREEN;
 use embassy_rp::flash::{
     Async, ERASE_SIZE, Error as FlashError, Flash as RpFlash, PAGE_SIZE, WRITE_SIZE,
 };
@@ -221,16 +222,41 @@ pub async fn config_command(args: &[&str]) {
             }
         }
         ["config", "get", key] => {
+            if *key == "scroll" {
+                let mut config = CONFIG.get().lock().await;
+                match config.fetch(key).await {
+                    Ok(Some(val)) => print!("{val}\r\n"),
+                    Ok(None) => print!("200\r\n"),
+                    Err(e) => print!("{e:?}\r\n"),
+                }
+                return;
+            }
             let mut config = CONFIG.get().lock().await;
             let value = config.fetch(key).await;
             print!("{value:?}\r\n");
         }
         ["config", "rm", key] => {
+            if *key == "scroll" {
+                SCREEN.get().lock().await.set_max_scrollback(200);
+            }
             let mut config = CONFIG.get().lock().await;
             let result = config.remove(key).await;
             print!("{result:?}\r\n");
         }
         ["config", "set", key, value] => {
+            if *key == "scroll" {
+                if let Ok(val) = value.parse::<usize>() {
+                    if val <= 500 {
+                        SCREEN.get().lock().await.set_max_scrollback(val);
+                    } else {
+                        print!("scroll value must be <= 500\r\n");
+                        return;
+                    }
+                } else {
+                    print!("scroll value must be a number\r\n");
+                    return;
+                }
+            }
             let value: StrValue = match (*value).try_into() {
                 Ok(v) => v,
                 Err(err) => {

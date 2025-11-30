@@ -263,6 +263,13 @@ async fn main(spawner: Spawner) {
     )
     .await;
 
+    // Load scrollback config
+    if let Ok(Some(val_str)) = CONFIG.get().lock().await.fetch("scroll").await {
+        if let Ok(val) = val_str.parse::<usize>() {
+            crate::screen::SCREEN.get().lock().await.set_max_scrollback(val);
+        }
+    }
+
     crate::net::setup_wifi(
         &spawner, p.PIN_23, p.PIN_24, p.PIN_25, p.PIN_29, p.PIO0, p.DMA_CH0,
     )
