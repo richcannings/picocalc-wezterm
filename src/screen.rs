@@ -229,6 +229,9 @@ impl ScreenLine {
 
 pub struct ScreenModel {
     lines: Vec<ScreenLine>,
+    scrollback: Vec<ScreenLine>,
+    viewport_offset: usize,
+    max_scrollback: usize,
     cursor_x: usize,
     cursor_y: usize,
     current_attrs: Attrs,
@@ -252,6 +255,9 @@ impl Default for ScreenModel {
 
         Self {
             lines,
+            scrollback: Vec::new(),
+            viewport_offset: 0,
+            max_scrollback: 200,
             cursor_x: 0,
             cursor_y: 0,
             current_attrs: Attrs::default(),
@@ -292,9 +298,30 @@ impl ScreenModel {
     fn scroll_up(&mut self) {
         // Remove first line, add new line at end
         if !self.lines.is_empty() {
-            self.lines.remove(0);
+            let line = self.lines.remove(0);
+            self.scrollback.push(line);
+            if self.scrollback.len() > self.max_scrollback {
+                self.scrollback.remove(0);
+            }
             self.lines.push(ScreenLine::new(self.cols));
-            self.full_repaint = true; // Simple repaint for scroll
+            self.full_repaint = true;
+        }
+    }
+
+    pub fn scroll_view_up(&mut self, n: usize) {
+        self.viewport_offset = (self.viewport_offset + n).min(self.scrollback.len());
+        self.full_repaint = true;
+    }
+
+    pub fn scroll_view_down(&mut self, n: usize) {
+        self.viewport_offset = self.viewport_offset.saturating_sub(n);
+        self.full_repaint = true;
+    }
+
+    pub fn reset_view(&mut self) {
+        if self.viewport_offset != 0 {
+            self.viewport_offset = 0;
+            self.full_repaint = true;
         }
     }
 
@@ -307,7 +334,30 @@ impl ScreenModel {
         let cell_width = font.character_size.width + font.character_spacing;
         let cell_height = font.character_size.height;
 
-        for (y, line) in self.lines.iter_mut().enumerate() {
+        for y in 0..self.rows {
+            let line_idx = if self.viewport_offset > 0 {
+                // Calculate absolute index in history + lines
+                // Total lines = scrollback.len() + lines.len() (which is rows)
+                // View start = Total lines - rows - viewport_offset
+                // Current row abs index = View start + y
+                let total_len = self.scrollback.len() + self.rows;
+                let view_start = total_len.saturating_sub(self.rows).saturating_sub(self.viewport_offset);
+                let abs_idx = view_start + y;
+                
+                if abs_idx < self.scrollback.len() {
+                    Some(&mut self.scrollback[abs_idx])
+                } else {
+                    Some(&mut self.lines[abs_idx - self.scrollback.len()])
+                }
+            } else {
+                Some(&mut self.lines[y])
+            };
+
+            let line = match line_idx {
+                Some(l) => l,
+                None => continue,
+            };
+
             if !line.dirty && !self.full_repaint {
                 continue;
             }
@@ -397,6 +447,7 @@ impl ScreenModel {
 
 impl vte::Perform for ScreenModel {
     fn print(&mut self, c: char) {
+        self.reset_view();
         if self.cursor_y >= self.rows {
             self.scroll_up();
             self.cursor_y = self.rows - 1;
@@ -420,6 +471,7 @@ impl vte::Perform for ScreenModel {
     }
 
     fn execute(&mut self, byte: u8) {
+        self.reset_view();
         match byte {
             b'\n' => { // LF
                 self.cursor_y += 1;

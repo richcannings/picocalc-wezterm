@@ -351,6 +351,12 @@ pub async fn keyboard_reader(
                     Key::Char('-') if key.modifiers == Modifiers::CTRL => {
                         SCREEN.get().lock().await.decrease_font();
                     }
+                    Key::Up if key.modifiers == Modifiers::CTRL => {
+                        SCREEN.get().lock().await.scroll_view_up(1);
+                    }
+                    Key::Down if key.modifiers == Modifiers::CTRL => {
+                        SCREEN.get().lock().await.scroll_view_down(1);
+                    }
                     _ => {
                         let proc = current_proc();
                         if let Err(_) = with_timeout(Duration::from_millis(100), async {
