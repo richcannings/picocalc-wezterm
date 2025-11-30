@@ -1,8 +1,8 @@
-# PicoCalc SSH Terminal
+# PicoCalc SSH Client
 
 A standalone SSH client and VT100/ANSI terminal emulator for the [Raspberry Pi Pico 2 W](https://www.raspberrypi.com/products/raspberry-pi-pico-2/) running on the [ClockworkPi PicoCalc](https://www.clockworkpi.com/picocalc).
 
-This project transforms your PicoCalc into a pocket-sized, WiFi-enabled terminal capable of connecting to remote servers via SSH. It is a fork of the [picocalc-wezterm](https://github.com/wez/picocalc-wezterm) project, and adds greater terminal character support and scrolling.
+This project transforms your PicoCalc into a pocket-sized, WiFi-enabled terminal capable of connecting to remote servers via SSH. It is a fork of the [picocalc-wezterm](https://github.com/wez/picocalc-wezterm) project, with improved terminal character support and scrolling. Thus, making the terminal experience more usable.
 
 <p align="center">
   <img src="img/picocalc-ssh-client-gemini.png" width="45%" />
@@ -70,13 +70,13 @@ You will need a standard Rust toolchain and a few helper tools:
 3.  **Generate UF2 File**:
     ```bash
     # Convert the ELF to UF2
-    cp target/thumbv8m.main-none-eabihf/release/picocalc-ssh-client target/thumbv8m.main-none-eabihf/release/picocalc-ssh-client.elf
-    picotool uf2 convert target/thumbv8m.main-none-eabihf/release/picocalc-ssh-client.elf picocalc.uf2
+    cp target/thumbv8m.main-none-eabihf/release/picocalc-wezterm target/thumbv8m.main-none-eabihf/release/picocalc-ssh-client.elf
+    picotool uf2 convert target/thumbv8m.main-none-eabihf/release/picocalc-ssh-client.elf picocalc-ssh-client.uf2
     ```
 
 4.  **Flash**:
     *   Hold the BOOTSEL button on your Pico 2 W while plugging it in.
-    *   Copy `picocalc.uf2` to the mounted `RPI-RP2` drive.
+    *   Copy `picocalc-ssh-client.uf2` to the mounted `RP2350` drive.
 
 ## Usage
 
